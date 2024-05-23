@@ -1,10 +1,13 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox, QListWidget, QInputDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox, QListWidget, QInputDialog, QScrollArea
 from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt
 from plataforma_aprendizaje import PlataformaAprendizaje
 from profesor import Profesor
 from estudiante import Estudiante
 from curso_contenido import CursoContenido
+from estilos import login_styles, contenido_styles, gestion_styles
+from Contenido.contenido import matematicas, ciencias
 
 class LoginWindow(QWidget):
     def __init__(self, plataforma):
@@ -14,9 +17,14 @@ class LoginWindow(QWidget):
 
     def initUI(self):
         self.setWindowTitle('Inicio de Sesión')
-        self.setGeometry(100, 100, 280, 170)
+        self.setGeometry(700, 400, 1500, 1000)
+        self.setStyleSheet(login_styles)
         
         layout = QVBoxLayout()
+
+        self.title = QLabel('Inicio de Sesión')
+        self.title.setObjectName('title')
+        layout.addWidget(self.title)
 
         self.email_label = QLabel('Correo:')
         self.email_input = QLineEdit()
@@ -62,7 +70,8 @@ class GestionUsuariosWindow(QWidget):
 
     def initUI(self):
         self.setWindowTitle('Gestión de Usuarios')
-        self.setGeometry(100, 100, 400, 300)
+        self.setGeometry(700, 400, 1500, 1000)
+        self.setStyleSheet(contenido_styles)
 
         layout = QVBoxLayout()
 
@@ -130,22 +139,40 @@ class ContenidoWindow(QWidget):
 
     def initUI(self):
         self.setWindowTitle('Contenido')
-        self.setGeometry(100, 100, 400, 300)
+        self.setGeometry(600, 200, 1700, 1400)
+        self.setStyleSheet(gestion_styles)
 
         layout = QVBoxLayout()
 
         self.contenido_list = QListWidget()
         self.updateContenidoList()
+        self.contenido_list.setFixedHeight(self.calculateListHeight())
         layout.addWidget(self.contenido_list)
 
         self.ver_contenido_button = QPushButton('Ver Contenido')
         self.ver_contenido_button.clicked.connect(self.verContenido)
         layout.addWidget(self.ver_contenido_button)
 
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+
         self.contenido_detalle = QLabel('')
+        self.contenido_detalle.setObjectName('contenido_detalle')
+        self.contenido_detalle.setAlignment(Qt.AlignTop)
+        self.contenido_detalle.setWordWrap(True)
+
         self.contenido_imagen = QLabel()
-        layout.addWidget(self.contenido_detalle)
-        layout.addWidget(self.contenido_imagen)
+        self.contenido_imagen.setObjectName('contenido_imagen')
+        self.contenido_imagen.setAlignment(Qt.AlignCenter)
+        self.contenido_imagen.setWordWrap(True)
+
+        content_layout.addWidget(self.contenido_detalle)
+        content_layout.addWidget(self.contenido_imagen)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(content_widget)
+        layout.addWidget(scroll_area)
 
         self.cerrar_sesion_button = QPushButton('Cerrar Sesión')
         self.cerrar_sesion_button.clicked.connect(self.cerrarSesion)
@@ -159,6 +186,12 @@ class ContenidoWindow(QWidget):
         if isinstance(contenidos, list):
             for contenido in contenidos:
                 self.contenido_list.addItem(f'{contenido[0]}')
+        self.contenido_list.setFixedHeight(self.calculateListHeight()*2)
+    
+    def calculateListHeight(self):
+        row_count = self.contenido_list.count()
+        row_height = self.contenido_list.sizeHintForRow(0)
+        return row_count * row_height + 2 * self.contenido_list.frameWidth()
 
     def verContenido(self):
         selected_item = self.contenido_list.currentItem()
@@ -166,7 +199,7 @@ class ContenidoWindow(QWidget):
             contenido_titulo = selected_item.text()
             for contenido in self.plataforma.contenidos:
                 if contenido.titulo == contenido_titulo:
-                    self.contenido_detalle.setText(f'Título: {contenido.titulo}\nDescripción: {contenido.descripcion}')
+                    self.contenido_detalle.setText(f'{contenido.descripcion}')
                     self.contenido_imagen.setPixmap(QPixmap(contenido.imagen))
                     break
         else:
@@ -186,8 +219,8 @@ if __name__ == '__main__':
     plataforma = PlataformaAprendizaje()
     profesor = Profesor(1, 'Prof. Juan', 'juan@correo.com', '1234')
     estudiante = Estudiante(2, 'Ana', 'ana@correo.com', '5678')
-    contenido1 = CursoContenido('Matemáticas', 'Álgebra básica', '1.jpg')
-    contenido2 = CursoContenido('Ciencias', 'Biología básica', '1.jpg')
+    contenido1 = CursoContenido('Matemáticas', matematicas, 'Contenido/matematicas.jpg')
+    contenido2 = CursoContenido('Ciencias', ciencias, 'Contenido/ciencias.jpg')
 
     plataforma.registrarUsuario(profesor)
     plataforma.registrarUsuario(estudiante)
